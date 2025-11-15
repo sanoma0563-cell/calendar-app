@@ -1,0 +1,12 @@
+<!-- head 内 -->
+<link rel="manifest" href="https://example.jimdosite.com/files/manifest.json">
+<meta name="theme-color" content="#2563eb">
+
+<!-- bodyの最後で service worker 登録 -->
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('https://example.jimdosite.com/files/sw.js')
+    .then(reg => console.log('Service Worker registered:', reg))
+    .catch(err => console.log('Service Worker registration failed:', err));
+}
+</script>
