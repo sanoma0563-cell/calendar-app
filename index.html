@@ -3,8 +3,9 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
-<title>誕生日キャラ 日干支カレンダー（スマホ版）</title>
+<title>日干運カレンダー（統合版）</title>
 
+<!-- 完全統合版 index.html（日干運 + 日干キャラ） -->
 <style>
   body {
     font-family: "Noto Sans JP", sans-serif;
@@ -13,113 +14,28 @@
     background: #f7fbfc;
     color: #111;
   }
-
-  h1 {
-    font-size: 18px;
-    margin: 0 0 6px;
-    text-align: center;
+  h1 { text-align:center; font-size:20px; }
+  p.lead { text-align:center; color:#555; margin-bottom:16px; }
+  .controls { display:flex; flex-direction:column; gap:14px; margin-bottom:18px; }
+  input[type="date"], input[type="number"] {
+    padding:12px; border:1px solid #cbd5e1; border-radius:8px; font-size:15px;
   }
-
-  p.lead {
-    margin: 4px 0 14px;
-    color: #444;
-    font-size: 14px;
-    text-align: center;
-  }
-
-  /* 入力エリア */
-  .controls {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    margin-bottom: 16px;
-  }
-
-  label {
-    font-size: 13px;
-    color: #333;
-  }
-
-  input[type="date"],
-  input[type="number"] {
-    width: 100%;
-    padding: 11px;
-    border-radius: 8px;
-    border: 1px solid #cbd5e1;
-    font-size: 15px;
-  }
-
-  .btn-row {
-    display: flex;
-    gap: 10px;
-    justify-content: space-between;
-  }
-
   button {
-    flex: 1;
-    padding: 12px;
-    border-radius: 8px;
-    border: 0;
-    font-size: 15px;
-    font-weight: 600;
-    background: #2563eb;
-    color: #fff;
-    cursor: pointer;
+    padding:12px; border:0; border-radius:8px; font-weight:600; font-size:15px;
+    background:#2563eb; color:#fff; cursor:pointer; flex:1;
   }
-
-  button.secondary {
-    background: #64748b;
-  }
-
-  #info {
-    font-size: 13px;
-    margin-bottom: 14px;
-    color: #333;
-    text-align: center;
-  }
-
-  /* カード型カレンダー */
-  #tableWrapper {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .card {
-    background: #fff;
-    padding: 14px;
-    border-radius: 10px;
-    box-shadow: 0 2px 6px rgba(2,6,23,0.1);
-    font-size: 14px;
-  }
-
-  .date-row {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 6px;
-    font-weight: 600;
-  }
-
-  .sunday { color: #c0262e; }
-  .saturday { color: #1e40af; }
-  .today {
-    background: #fff2e0 !important;
-    border-left: 6px solid #f97316;
-  }
-
-  .label { font-weight: bold; margin-right: 6px; }
-
-  @media (min-width: 750px) {
-    body { max-width: 680px; margin: 20px auto; }
-    h1 { font-size: 22px; }
-  }
+  button.secondary { background:#64748b; }
+  .btn-row { display:flex; gap:12px; }
+  #info { text-align:center; margin-bottom:14px; font-size:14px; }
+  .card { background:#fff; padding:14px; border-radius:10px; box-shadow:0 2px 6px rgba(2,6,23,0.1); margin-bottom:10px; }
+  .date-row { display:flex; justify-content:space-between; margin-bottom:6px; font-weight:600; }
+  .today { background:#fff2e0 !important; border-left:6px solid #f97316; }
+  .sunday { color:#c0262e; }
+  .saturday { color:#1e40af; }
+  .label { font-weight:bold; }
 </style>
 
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-</head>
-<body>
-
-<h1>誕生日キャラクター日干支カレンダー</h1>
+<h1>日干キャラ + 日干運カレンダー（完全統合版）</h1>
 <p class="lead">基準日：<strong>2025-10-22（甲子）</strong></p>
 
 <div class="controls">
@@ -127,12 +43,10 @@
     <label>誕生日</label>
     <input id="birth" type="date" />
   </div>
-
   <div>
     <label>表示日数</label>
     <input id="days" type="number" min="1" value="61" />
   </div>
-
   <div class="btn-row">
     <button id="btnGenerate">作成</button>
     <button id="btnDownload" class="secondary">Excel</button>
@@ -142,18 +56,21 @@
 <div id="info">誕生日を入力してください。</div>
 <div id="tableWrapper"></div>
 
-
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script>
-// ---------- 元のロジックはそのまま ----------
+// ====== 十干・十二支 基本 ======
 const stems=["甲","乙","丙","丁","戊","己","庚","辛","壬","癸"];
 const branches=["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"];
 const jpWeek=["日","月","火","水","木","金","土"];
 
+// ====== 五行 + 陽陰 情報 ======
 const kanInfo={
   "甲":["木","陽"],"乙":["木","陰"],"丙":["火","陽"],"丁":["火","陰"],
   "戊":["土","陽"],"己":["土","陰"],"庚":["金","陽"],"辛":["金","陰"],
   "壬":["水","陽"],"癸":["水","陰"]
 };
+
+// 生剋
 const elementRelations={
   "木":{生:"火",剋:"土"},
   "火":{生:"土",剋:"金"},
@@ -161,6 +78,8 @@ const elementRelations={
   "金":{生:"水",剋:"木"},
   "水":{生:"木",剋:"火"}
 };
+
+// ====== キャラ判定マップ ======
 const characterMap={
   "same-比和-same":"ストレート",
   "same-相生-same":"イノセント",
@@ -173,6 +92,7 @@ const characterMap={
   "diff-剋される-diff":"プライド",
   "diff-生じられる-diff":"セオリー"
 };
+
 const comments={
   "ストレート":"素直に感情が出る。率直な表現が吉。",
   "イノセント":"純粋な行動が評価される。",
@@ -186,25 +106,37 @@ const comments={
   "セオリー":"基本を守ると安定。"
 };
 
-const referenceDate = new Date("2025-10-22T00:00:00+09:00");
-function floorMod(a,b){ return ((a % b) + b) % b; }
+// ====== 日干運（fortune_mobile のロジック追加） ======
+const fortuneMap={
+  "比和":"安定・等身大の自分が出る日",
+  "相生":"協力・サポート・良い流れ",
+  "相剋":"挑戦・突破力が試される",
+  "剋す":"能動的に突破できる日",
+  "剋される":"周囲から影響・調整が必要",
+  "生じられる":"助けを得られる・成長",
+  "なし":"特徴が薄い日"
+};
 
-function tokyoMidnightFromDate(d){
-  const s = d.toLocaleString('en-US',{timeZone:'Asia/Tokyo'});
-  const tok = new Date(s);
-  return new Date(tok.getFullYear(),tok.getMonth(),tok.getDate());
+// ====== 計算の基本 ======
+const referenceDate=new Date("2025-10-22T00:00:00+09:00");
+const floorMod=(a,b)=>((a%b)+b)%b;
+
+function tokyoMidnight(d){
+  const s=d.toLocaleString('en-US',{timeZone:'Asia/Tokyo'});
+  const t=new Date(s);
+  return new Date(t.getFullYear(),t.getMonth(),t.getDate());
 }
-function formatDate(d){
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-}
-function ganzhiForDate(date){
-  const delta = Math.floor((date - referenceDate)/86400000);
+function fmt(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+
+function ganzhi(d){
+  const delta=Math.floor((d-referenceDate)/86400000);
   return stems[floorMod(delta,10)] + branches[floorMod(delta,12)];
 }
-function dayStemForDate(date){
-  const delta = Math.floor((date - referenceDate)/86400000);
+function dayStem(d){
+  const delta=Math.floor((d-referenceDate)/86400000);
   return stems[floorMod(delta,10)];
 }
+
 function getRelation(myEl, otherEl){
   if(myEl===otherEl) return "比和";
   if(elementRelations[myEl].生===otherEl) return "相生";
@@ -213,96 +145,103 @@ function getRelation(myEl, otherEl){
   if(elementRelations[otherEl].剋===myEl) return "剋される";
   return "なし";
 }
+
 function getCharacter(myKan, otherKan){
-  const [myEl,myYin]=kanInfo[myKan];
-  const [el,yin]=kanInfo[otherKan];
+  const [myEl,myY]=kanInfo[myKan];
+  const [el,y]=kanInfo[otherKan];
+
   const rel=getRelation(myEl,el);
-  const yinType=myYin===yin?"same":"diff";
+  const yinType=myY===y?"same":"diff";
   const key=`${yinType}-${rel}-${yinType}`;
-  return {char: characterMap[key]||"不明", rel, el, yin, comment: comments[characterMap[key]]||""};
+
+  return {
+    char: characterMap[key]||"不明",
+    comment: comments[characterMap[key]]||"",
+    rel,
+    fortune: fortuneMap[rel]||""
+  };
 }
 
 let tableData=[];
-
-function generateCalendar(birthStr, days){
+function generate(birthStr, days){
   if(!birthStr){ alert("誕生日を入力してください"); return; }
-  const birthTokyo = tokyoMidnightFromDate(new Date(birthStr));
-  const myDayKan = dayStemForDate(birthTokyo);
+  const b=tokyoMidnight(new Date(birthStr));
+  const myKan=dayStem(b);
+  document.getElementById("info").textContent=`あなたの日干は「${myKan}」です。`;
 
-  document.getElementById("info").textContent = `あなたの日干は「${myDayKan}」です。`;
-
-  const today = tokyoMidnightFromDate(new Date());
+  const start=tokyoMidnight(new Date());
   const rows=[];
   for(let i=0;i<days;i++){
-    const d = new Date(today);
-    d.setDate(today.getDate()+i);
-    const tok = tokyoMidnightFromDate(d);
-    const dateStr = formatDate(tok);
-    const gz = ganzhiForDate(tok);
-    const info = getCharacter(myDayKan, gz[0]);
+    const d=new Date(start); d.setDate(start.getDate()+i);
+    const t=tokyoMidnight(d);
+
+    const gz=ganzhi(t);
+    const info=getCharacter(myKan,gz[0]);
 
     rows.push({
-      日付: tok,
-      日付表示: dateStr,
-      曜日: jpWeek[tok.getDay()],
-      日干支: gz,
-      関係: info.rel,
-      キャラ: info.char,
-      コメント: info.comment
+      日付:t,
+      日付表示:fmt(t),
+      曜日:jpWeek[t.getDay()],
+      日干支:gz,
+      関係:info.rel,
+      キャラ:info.char,
+      コメント:info.comment,
+      運勢:info.fortune
     });
   }
-
-  tableData = rows;
-  renderCards(rows, formatDate(today));
+  tableData=rows;
+  render(rows,fmt(start));
 }
 
-function renderCards(rows, todayStr){
+function render(rows,today){
   const wrap=document.getElementById("tableWrapper");
   wrap.innerHTML="";
 
   rows.forEach(r=>{
-    const card=document.createElement("div");
-    card.className="card";
+    const c=document.createElement("div");
+    c.className="card";
+    if(r.日付表示===today) c.classList.add("today");
+    if(r.曜日==="日") c.classList.add("sunday");
+    if(r.曜日==="土") c.classList.add("saturday");
 
-    if(r.日付表示===todayStr) card.classList.add("today");
-    if(r.曜日==="日") card.classList.add("sunday");
-    if(r.曜日==="土") card.classList.add("saturday");
-
-    card.innerHTML = `
+    c.innerHTML = `
       <div class="date-row">
         <div>${r.日付表示}</div>
         <div>${r.曜日}</div>
       </div>
-
       <div><span class="label">日干支：</span>${r.日干支}</div>
       <div><span class="label">関係：</span>${r.関係}</div>
       <div><span class="label">キャラ：</span>${r.キャラ}</div>
       <div><span class="label">コメント：</span>${r.コメント}</div>
+      <div><span class="label">運勢：</span>${r.運勢}</div>
     `;
-    wrap.appendChild(card);
+    wrap.appendChild(c);
   });
 }
 
-// Excel出力
+// ===== Excel 出力 =====
 function downloadExcel(){
   if(!tableData.length){ alert("先に作成してください"); return; }
-  const aoa=[["日付","曜日","日干支","関係","キャラ","コメント"]];
-  tableData.forEach(r=>aoa.push([r.日付,r.曜日,r.日干支,r.関係,r.キャラ,r.コメント]));
+  const aoa=[["日付","曜日","日干支","関係","キャラ","コメント","運勢"]];
+
+  tableData.forEach(r=>{
+    aoa.push([r.日付, r.曜日, r.日干支, r.関係, r.キャラ, r.コメント, r.運勢]);
+  });
 
   const ws=XLSX.utils.aoa_to_sheet(aoa);
   const wb=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb,ws,"data");
-  XLSX.writeFile(wb,"calendar.xlsx");
+  XLSX.utils.book_append_sheet(wb,ws,"calendar");
+  XLSX.writeFile(wb,"nikkannu_calendar.xlsx");
 }
 
-// ボタン
+// ===== ボタン動作 =====
 document.getElementById("btnGenerate").onclick=()=>{
   const birth=document.getElementById("birth").value;
   const days=parseInt(document.getElementById("days").value)||61;
-  generateCalendar(birth,days);
+  generate(birth,days);
 };
-document.getElementById("btnDownload").onclick=downloadExcel;
 
+document.getElementById("btnDownload").onclick=downloadExcel;
 </script>
 </body>
 </html>
